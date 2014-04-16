@@ -1,5 +1,6 @@
-Revision history for Win32-RunAsAdmin
+Revision history for per module Win32::RunAsAdmin
 
-0.01    Date/time
-        First version, released on an unsuspecting world.
+0.01 2014-04-17
+
+ - Initial release
 

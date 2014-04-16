@@ -4,6 +4,7 @@ script/elev
 Makefile.PL
 MANIFEST			This list of files
 README
+LICENSE
 t/00-load.t
 t/01-all.t
 t/manifest.t
