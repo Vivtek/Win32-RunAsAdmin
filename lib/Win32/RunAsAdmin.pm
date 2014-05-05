@@ -4,8 +4,10 @@ use 5.006;
 use strict;
 use warnings FATAL => 'all';
 
-use Win32::TieRegistry qw( :KEY_ );
+use Win32;
+use Cwd;
 use Win32::OLE;
+use Devel::PL_origargv;
 
 =head1 NAME
 
@@ -13,11 +15,11 @@ Win32::RunAsAdmin - Simple tools for handling Windows UAC
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 =head1 SYNOPSIS
@@ -51,14 +53,24 @@ But maybe you'd rather do something else before requesting a restart with elevat
        # Do some stuff... 
        Win32::RunAsAdmin::restart;
     }
-    
-If you just want to use the infrastructure to run something else, that's simple, too:
+
+But be warned: be sure you use Win32::RunAsAdmin before importing anything else that might
+affect the current working directory! Otherwise Win32::RunAsAdmin won't actually know what
+your original working directory was.  (It uses L<Devel::PL_origargv> to get the absolute
+real command-line arguments, so that's safe.)
+
+If you just want to use the infrastructure to run something else with elevated privileges,
+that's simple, too:
 
     use Win32::RunAsAdmin;
     
     Win32::RunAsAdmin::run ($executable, $arguments, $directory);
     
 This is also exposed as a command-line utility "elev" when you install this module.
+
+=cut
+
+our $starting_directory;
 
 =head1 SUBROUTINES/METHODS
 
@@ -71,13 +83,12 @@ Call this to check whether you're already running with elevated privileges.
    } else {
        # Just read and report Registry values
    }
+   
+(It just uses Win32::IsAdminUser, but I find it easier to remember it like this.)
 
 =cut
 
-sub check {
-    my $key = Win32::TieRegistry->Open( "LMachine", {Access=>KEY_READ()|KEY_WRITE()} ) or return 0;
-    return 1;
-}
+sub check { Win32::IsAdminUser(); }
 
 =head2 run ($executable, [$arguments, [$working_directory]])
 
@@ -118,11 +129,13 @@ Call this to restart the current script with its current command line in the cur
 =cut
 
 sub restart {
-    run ($^X, $0 . ' ' . escape_args(@ARGV));
+    my @actual_args = Devel::PL_origargv->get; # Thank you, Anonymous Monk!
+    run (shift(@actual_args), shift(@actual_args) . ' ' . escape_args(@actual_args));
     exit;
 }
 
 sub import {
+    $starting_directory = getcwd();
     restart if (defined $_[1] and $_[1] eq 'force' and not check);
 }
 

@@ -19,7 +19,7 @@ WriteMakefile(
     },
     EXE_FILES           => [ qw(script/elev) ],
     PREREQ_PM => {
-        'Win32::TieRegistry' => 0,
+        'Devel::PL_origargv' => 0,
         'Win32::OLE' => 0,
     },
     META_MERGE => {
